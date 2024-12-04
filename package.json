@@ -1,38 +1,8 @@
 {
-  "name": "@tbd54566975/dwn-sdk-js",
-  "version": "0.4.5",
+  "name": "fork-vp-dwn-sdk-js",
+  "version": "0.0.1",
   "description": "A reference implementation of https://identity.foundation/decentralized-web-node/spec/",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TBD54566975/dwn-sdk-js.git"
-  },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/TBD54566975/dwn-sdk-js#readme",
-  "bugs": {
-    "url": "https://github.com/TBD54566975/dwn-sdk-js/issues"
-  },
-  "contributors": [
-    {
-      "name": "Daniel Buchner",
-      "url": "https://github.com/csuwildcat"
-    },
-    {
-      "name": "Diane Huxley",
-      "url": "https://github.com/diehuxx"
-    },
-    {
-      "name": "Henry Tsai",
-      "url": "https://github.com/thehenrytsai"
-    },
-    {
-      "name": "Moe Jangda",
-      "url": "https://github.com/mistermoe"
-    },
-    {
-      "name": "Liran Cohen",
-      "url": "https://github.com/LiranCohen"
-    }
-  ],
   "type": "module",
   "@comment files": [
     "the files property informs npm about which files we want to include in our published package.",
