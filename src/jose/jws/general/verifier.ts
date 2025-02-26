@@ -1,12 +1,12 @@
-import type { Cache } from "../../../types/cache.js";
-import type { GeneralJws } from "../../../types/jws-types.js";
-import type { PublicJwk } from "../../../types/jose-types.js";
-import type { DidResolver, DidVerificationMethod } from "@web5/dids";
+import type { Cache } from '../../../types/cache.js';
+import type { GeneralJws } from '../../../types/jws-types.js';
+import type { PublicJwk } from '../../../types/jose-types.js';
+import type { DidResolver, DidVerificationMethod } from '@web5/dids';
 
-import { Jws } from "../../../utils/jws.js";
-import { MemoryCache } from "../../../utils/memory-cache.js";
-import { validateJsonSchema } from "../../../schema-validator.js";
-import { DwnError, DwnErrorCode } from "../../../core/dwn-error.js";
+import { Jws } from '../../../utils/jws.js';
+import { MemoryCache } from '../../../utils/memory-cache.js';
+import { validateJsonSchema } from '../../../schema-validator.js';
+import { DwnError, DwnErrorCode } from '../../../core/dwn-error.js';
 
 type VerificationResult = {
   /** DIDs of all signers */
@@ -105,8 +105,7 @@ export class GeneralJwsVerifier {
     // `resolve` throws exception if DID is invalid, DID method is not supported,
     // or resolving DID fails
     const did = Jws.extractDid(kid);
-    const { didDocument, didDocumentMetadata, didResolutionMetadata } =
-      await didResolver.resolve(did);
+    const { didDocument } = await didResolver.resolve(did);
     const { verificationMethod: verificationMethods = [] } = didDocument || {};
 
     let verificationMethod: DidVerificationMethod | undefined;
@@ -124,11 +123,11 @@ export class GeneralJwsVerifier {
     if (!verificationMethod) {
       throw new DwnError(
         DwnErrorCode.GeneralJwsVerifierGetPublicKeyNotFound,
-        "public key needed to verify signature not found in DID Document"
+        'public key needed to verify signature not found in DID Document'
       );
     }
 
-    validateJsonSchema("JwkVerificationMethod", verificationMethod);
+    validateJsonSchema('JwkVerificationMethod', verificationMethod);
 
     const { publicKeyJwk: publicJwk } = verificationMethod;
 

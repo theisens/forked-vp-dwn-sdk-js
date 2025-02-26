@@ -1,7 +1,12 @@
 import type { MessageStore } from '../types//message-store.js';
 import type { Pagination } from '../types/message-types.js';
 import type { Signer } from '../types/signer.js';
-import type { DataEncodedRecordsWriteMessage, RecordsFilter, RecordsQueryDescriptor, RecordsQueryMessage } from '../types/records-types.js';
+import type {
+  DataEncodedRecordsWriteMessage,
+  RecordsFilter,
+  RecordsQueryDescriptor,
+  RecordsQueryMessage
+} from '../types/records-types.js';
 
 import { AbstractMessage } from '../core/abstract-message.js';
 import { DateSort } from '../types/records-types.js';
@@ -12,8 +17,14 @@ import { RecordsGrantAuthorization } from '../core/records-grant-authorization.j
 import { removeUndefinedProperties } from '../utils/object.js';
 import { Time } from '../utils/time.js';
 import { DwnError, DwnErrorCode } from '../core/dwn-error.js';
-import { DwnInterfaceName, DwnMethodName } from '../enums/dwn-interface-method.js';
-import { validateProtocolUrlNormalized, validateSchemaUrlNormalized } from '../utils/url.js';
+import {
+  DwnInterfaceName,
+  DwnMethodName
+} from '../enums/dwn-interface-method.js';
+import {
+  validateProtocolUrlNormalized,
+  validateSchemaUrlNormalized
+} from '../utils/url.js';
 
 export type RecordsQueryOptions = {
   messageTimestamp?: string;
@@ -22,6 +33,7 @@ export type RecordsQueryOptions = {
   pagination?: Pagination;
   signer?: Signer;
   protocolRole?: string;
+  permissionGrantId?: string;
 
   /**
    * The delegated grant to sign on behalf of the logical author, which is the grantor (`grantedBy`) of the delegated grant.
@@ -33,11 +45,14 @@ export type RecordsQueryOptions = {
  * A class representing a RecordsQuery DWN message.
  */
 export class RecordsQuery extends AbstractMessage<RecordsQueryMessage> {
-
-  public static async parse(message: RecordsQueryMessage): Promise<RecordsQuery> {
-
+  public static async parse(
+    message: RecordsQueryMessage
+  ): Promise<RecordsQuery> {
     if (message.descriptor.filter.published === false) {
-      if (message.descriptor.dateSort === DateSort.PublishedAscending || message.descriptor.dateSort === DateSort.PublishedDescending) {
+      if (
+        message.descriptor.dateSort === DateSort.PublishedAscending ||
+        message.descriptor.dateSort === DateSort.PublishedDescending
+      ) {
         throw new DwnError(
           DwnErrorCode.RecordsQueryParseFilterPublishedSortInvalid,
           `queries must not filter for \`published:false\` and sort by ${message.descriptor.dateSort}`
@@ -47,10 +62,16 @@ export class RecordsQuery extends AbstractMessage<RecordsQueryMessage> {
 
     let signaturePayload;
     if (message.authorization !== undefined) {
-      signaturePayload = await Message.validateSignatureStructure(message.authorization.signature, message.descriptor);
+      signaturePayload = await Message.validateSignatureStructure(
+        message.authorization.signature,
+        message.descriptor
+      );
     }
 
-    await Records.validateDelegatedGrantReferentialIntegrity(message, signaturePayload);
+    await Records.validateDelegatedGrantReferentialIntegrity(
+      message,
+      signaturePayload
+    );
 
     if (signaturePayload?.protocolRole !== undefined) {
       if (message.descriptor.filter.protocolPath === undefined) {
@@ -73,18 +94,23 @@ export class RecordsQuery extends AbstractMessage<RecordsQueryMessage> {
     return new RecordsQuery(message);
   }
 
-  public static async create(options: RecordsQueryOptions): Promise<RecordsQuery> {
+  public static async create(
+    options: RecordsQueryOptions
+  ): Promise<RecordsQuery> {
     const descriptor: RecordsQueryDescriptor = {
       interface        : DwnInterfaceName.Records,
       method           : DwnMethodName.Query,
       messageTimestamp : options.messageTimestamp ?? Time.getCurrentTimestamp(),
       filter           : Records.normalizeFilter(options.filter),
       dateSort         : options.dateSort,
-      pagination       : options.pagination,
+      pagination       : options.pagination
     };
 
     if (options.filter.published === false) {
-      if (options.dateSort === DateSort.PublishedAscending || options.dateSort === DateSort.PublishedDescending) {
+      if (
+        options.dateSort === DateSort.PublishedAscending ||
+        options.dateSort === DateSort.PublishedDescending
+      ) {
         throw new DwnError(
           DwnErrorCode.RecordsQueryCreateFilterPublishedSortInvalid,
           `queries must not filter for \`published:false\` and sort by ${options.dateSort}`
@@ -103,8 +129,9 @@ export class RecordsQuery extends AbstractMessage<RecordsQueryMessage> {
       authorization = await Message.createAuthorization({
         descriptor,
         signer,
-        protocolRole   : options.protocolRole,
-        delegatedGrant : options.delegatedGrant
+        permissionGrantId : options.permissionGrantId,
+        protocolRole      : options.protocolRole,
+        delegatedGrant    : options.delegatedGrant
       });
     }
     const message = { descriptor, authorization };
@@ -119,7 +146,9 @@ export class RecordsQuery extends AbstractMessage<RecordsQueryMessage> {
    * @param messageStore Used to check if the grant has been revoked.
    */
   public async authorizeDelegate(messageStore: MessageStore): Promise<void> {
-    const delegatedGrant = await PermissionGrant.parse(this.message.authorization!.authorDelegatedGrant!);
+    const delegatedGrant = await PermissionGrant.parse(
+      this.message.authorization!.authorDelegatedGrant!
+    );
     await RecordsGrantAuthorization.authorizeQueryOrSubscribe({
       incomingMessage : this.message,
       expectedGrantee : this.signer!,

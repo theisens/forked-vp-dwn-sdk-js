@@ -1,6 +1,12 @@
 import type { MessageStore } from '../types//message-store.js';
 import type { Signer } from '../types/signer.js';
-import type { DataEncodedRecordsWriteMessage, RecordsFilter , RecordsReadDescriptor, RecordsReadMessage, RecordsWriteMessage } from '../types/records-types.js';
+import type {
+  DataEncodedRecordsWriteMessage,
+  RecordsFilter,
+  RecordsReadDescriptor,
+  RecordsReadMessage,
+  RecordsWriteMessage
+} from '../types/records-types.js';
 
 import { AbstractMessage } from '../core/abstract-message.js';
 import { Message } from '../core/message.js';
@@ -9,7 +15,10 @@ import { Records } from '../utils/records.js';
 import { RecordsGrantAuthorization } from '../core/records-grant-authorization.js';
 import { removeUndefinedProperties } from '../utils/object.js';
 import { Time } from '../utils/time.js';
-import { DwnInterfaceName, DwnMethodName } from '../enums/dwn-interface-method.js';
+import {
+  DwnInterfaceName,
+  DwnMethodName
+} from '../enums/dwn-interface-method.js';
 
 export type RecordsReadOptions = {
   filter: RecordsFilter;
@@ -29,14 +38,19 @@ export type RecordsReadOptions = {
 };
 
 export class RecordsRead extends AbstractMessage<RecordsReadMessage> {
-
   public static async parse(message: RecordsReadMessage): Promise<RecordsRead> {
     let signaturePayload;
     if (message.authorization !== undefined) {
-      signaturePayload = await Message.validateSignatureStructure(message.authorization.signature, message.descriptor);
+      signaturePayload = await Message.validateSignatureStructure(
+        message.authorization.signature,
+        message.descriptor
+      );
     }
 
-    await Records.validateDelegatedGrantReferentialIntegrity(message, signaturePayload);
+    await Records.validateDelegatedGrantReferentialIntegrity(
+      message,
+      signaturePayload
+    );
 
     Time.validateTimestamp(message.descriptor.messageTimestamp);
 
@@ -51,7 +65,9 @@ export class RecordsRead extends AbstractMessage<RecordsReadMessage> {
    *
    * @throws {DwnError} when a combination of required RecordsReadOptions are missing
    */
-  public static async create(options: RecordsReadOptions): Promise<RecordsRead> {
+  public static async create(
+    options: RecordsReadOptions
+  ): Promise<RecordsRead> {
     const { filter, signer, permissionGrantId, protocolRole } = options;
     const currentTime = Time.getCurrentTimestamp();
 
@@ -59,7 +75,7 @@ export class RecordsRead extends AbstractMessage<RecordsReadMessage> {
       interface        : DwnInterfaceName.Records,
       method           : DwnMethodName.Read,
       filter           : Records.normalizeFilter(filter),
-      messageTimestamp : options.messageTimestamp ?? currentTime,
+      messageTimestamp : options.messageTimestamp ?? currentTime
     };
 
     removeUndefinedProperties(descriptor);
@@ -86,8 +102,13 @@ export class RecordsRead extends AbstractMessage<RecordsReadMessage> {
    * Authorizes the delegate who signed this message.
    * @param messageStore Used to check if the grant has been revoked.
    */
-  public async authorizeDelegate(matchedRecordsWrite: RecordsWriteMessage, messageStore: MessageStore): Promise<void> {
-    const delegatedGrant = await PermissionGrant.parse(this.message.authorization!.authorDelegatedGrant!);
+  public async authorizeDelegate(
+    matchedRecordsWrite: RecordsWriteMessage,
+    messageStore: MessageStore
+  ): Promise<void> {
+    const delegatedGrant = await PermissionGrant.parse(
+      this.message.authorization!.authorDelegatedGrant!
+    );
     await RecordsGrantAuthorization.authorizeRead({
       recordsReadMessage          : this.message,
       recordsWriteMessageToBeRead : matchedRecordsWrite,

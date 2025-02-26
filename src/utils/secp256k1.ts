@@ -1,10 +1,10 @@
-import type { PrivateJwk, PublicJwk } from "../types/jose-types.js";
+import type { PrivateJwk, PublicJwk } from '../types/jose-types.js';
 
-import * as secp256k1 from "@noble/secp256k1";
+import * as secp256k1 from '@noble/secp256k1';
 
-import { Encoder } from "../utils/encoder.js";
-import { sha256 } from "multiformats/hashes/sha2";
-import { DwnError, DwnErrorCode } from "../core/dwn-error.js";
+import { Encoder } from '../utils/encoder.js';
+import { sha256 } from 'multiformats/hashes/sha2';
+import { DwnError, DwnErrorCode } from '../core/dwn-error.js';
 
 /**
  * Class containing SECP256K1 related utility methods.
@@ -15,10 +15,10 @@ export class Secp256k1 {
    * @throws {Error} if fails validation.
    */
   public static validateKey(jwk: PrivateJwk | PublicJwk): void {
-    if (jwk.kty !== "EC" || jwk.crv !== "secp256k1") {
+    if (jwk.kty !== 'EC' || jwk.crv !== 'secp256k1') {
       throw new DwnError(
         DwnErrorCode.Secp256k1KeyNotValid,
-        "Invalid SECP256K1 JWK: `kty` MUST be `EC`. `crv` MUST be `secp256k1`"
+        'Invalid SECP256K1 JWK: `kty` MUST be `EC`. `crv` MUST be `secp256k1`'
       );
     }
   }
@@ -52,9 +52,9 @@ export class Secp256k1 {
     );
 
     const publicJwk: PublicJwk = {
-      alg: "ES256K",
-      kty: "EC",
-      crv: "secp256k1",
+      alg : 'ES256K',
+      kty : 'EC',
+      crv : 'secp256k1',
       x,
       y
     };
@@ -84,8 +84,8 @@ export class Secp256k1 {
     const y = Encoder.base64UrlToBytes(publicJwk.y!);
 
     return secp256k1.ProjectivePoint.fromAffine({
-      x: secp256k1.etc.bytesToNumberBE(x),
-      y: secp256k1.etc.bytesToNumberBE(y)
+      x : secp256k1.etc.bytesToNumberBE(x),
+      y : secp256k1.etc.bytesToNumberBE(y)
     }).toRawBytes(true);
   }
 

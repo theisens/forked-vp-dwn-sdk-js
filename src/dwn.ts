@@ -1,17 +1,17 @@
-import type { DataStore } from "./types/data-store.js";
-import type { DidResolver } from "@web5/dids";
-import type { EventLog } from "./types/event-log.js";
-import type { EventStream } from "./types/subscriptions.js";
-import type { MessageStore } from "./types/message-store.js";
-import type { MethodHandler } from "./types/method-handler.js";
-import type { Readable } from "readable-stream";
-import type { ResumableTaskStore } from "./types/resumable-task-store.js";
-import type { TenantGate } from "./core/tenant-gate.js";
-import type { UnionMessageReply } from "./core/message-reply.js";
+import type { DataStore } from './types/data-store.js';
+import type { DidResolver } from '@web5/dids';
+import type { EventLog } from './types/event-log.js';
+import type { EventStream } from './types/subscriptions.js';
+import type { MessageStore } from './types/message-store.js';
+import type { MethodHandler } from './types/method-handler.js';
+import type { Readable } from 'readable-stream';
+import type { ResumableTaskStore } from './types/resumable-task-store.js';
+import type { TenantGate } from './core/tenant-gate.js';
+import type { UnionMessageReply } from './core/message-reply.js';
 import type {
   GenericMessage,
   GenericMessageReply
-} from "./types/message-types.js";
+} from './types/message-types.js';
 import type {
   MessagesQueryMessage,
   MessagesQueryReply,
@@ -21,12 +21,12 @@ import type {
   MessagesSubscribeMessageOptions,
   MessagesSubscribeReply,
   MessageSubscriptionHandler
-} from "./types/messages-types.js";
+} from './types/messages-types.js';
 import type {
   ProtocolsConfigureMessage,
   ProtocolsQueryMessage,
   ProtocolsQueryReply
-} from "./types/protocols-types.js";
+} from './types/protocols-types.js';
 import type {
   RecordsDeleteMessage,
   RecordsQueryMessage,
@@ -39,35 +39,35 @@ import type {
   RecordSubscriptionHandler,
   RecordsWriteMessage,
   RecordsWriteMessageOptions
-} from "./types/records-types.js";
+} from './types/records-types.js';
 
-import { AllowAllTenantGate } from "./core/tenant-gate.js";
-import { Message } from "./core/message.js";
-import { messageReplyFromError } from "./core/message-reply.js";
-import { MessagesQueryHandler } from "./handlers/messages-query.js";
-import { MessagesReadHandler } from "./handlers/messages-read.js";
-import { MessagesSubscribeHandler } from "./handlers/messages-subscribe.js";
-import { ProtocolsConfigureHandler } from "./handlers/protocols-configure.js";
-import { ProtocolsQueryHandler } from "./handlers/protocols-query.js";
-import { RecordsDeleteHandler } from "./handlers/records-delete.js";
-import { RecordsQueryHandler } from "./handlers/records-query.js";
-import { RecordsReadHandler } from "./handlers/records-read.js";
-import { RecordsSubscribeHandler } from "./handlers/records-subscribe.js";
-import { RecordsWriteHandler } from "./handlers/records-write.js";
-import { ResumableTaskManager } from "./core/resumable-task-manager.js";
-import { StorageController } from "./store/storage-controller.js";
+import { AllowAllTenantGate } from './core/tenant-gate.js';
+import { Message } from './core/message.js';
+import { messageReplyFromError } from './core/message-reply.js';
+import { MessagesQueryHandler } from './handlers/messages-query.js';
+import { MessagesReadHandler } from './handlers/messages-read.js';
+import { MessagesSubscribeHandler } from './handlers/messages-subscribe.js';
+import { ProtocolsConfigureHandler } from './handlers/protocols-configure.js';
+import { ProtocolsQueryHandler } from './handlers/protocols-query.js';
+import { RecordsDeleteHandler } from './handlers/records-delete.js';
+import { RecordsQueryHandler } from './handlers/records-query.js';
+import { RecordsReadHandler } from './handlers/records-read.js';
+import { RecordsSubscribeHandler } from './handlers/records-subscribe.js';
+import { RecordsWriteHandler } from './handlers/records-write.js';
+import { ResumableTaskManager } from './core/resumable-task-manager.js';
+import { StorageController } from './store/storage-controller.js';
 import {
   DidDht,
   DidJwk,
   DidKey,
-  DidWeb,
   DidResolverCacheLevel,
+  DidWeb,
   UniversalResolver
-} from "@web5/dids";
+} from '@web5/dids';
 import {
   DwnInterfaceName,
   DwnMethodName
-} from "./enums/dwn-interface-method.js";
+} from './enums/dwn-interface-method.js';
 
 export class Dwn {
   private methodHandlers: { [key: string]: MethodHandler };
@@ -91,10 +91,10 @@ export class Dwn {
     this.eventLog = config.eventLog;
     this.eventStream = config.eventStream;
     this.storageController = new StorageController({
-      messageStore: this.messageStore,
-      dataStore: this.dataStore,
-      eventLog: this.eventLog,
-      eventStream: this.eventStream
+      messageStore : this.messageStore,
+      dataStore    : this.dataStore,
+      eventLog     : this.eventLog,
+      eventStream  : this.eventStream
     });
     this.resumableTaskManager = new ResumableTaskManager(
       config.resumableTaskStore,
@@ -169,8 +169,8 @@ export class Dwn {
    */
   public static async create(config: DwnConfig): Promise<Dwn> {
     config.didResolver ??= new UniversalResolver({
-      didResolvers: [DidDht, DidJwk, DidKey, DidWeb],
-      cache: new DidResolverCacheLevel({ location: "RESOLVERCACHE" })
+      didResolvers : [DidDht, DidJwk, DidKey, DidWeb],
+      cache        : new DidResolverCacheLevel({ location: 'RESOLVERCACHE' })
     });
     config.tenantGate ??= new AllowAllTenantGate();
 
@@ -268,15 +268,12 @@ export class Dwn {
 
     const handlerKey =
       rawMessage.descriptor.interface + rawMessage.descriptor.method;
-    console.log("handler key: ", handlerKey);
     const methodHandlerReply = await this.methodHandlers[handlerKey].handle({
       tenant,
       message: rawMessage as GenericMessage,
       dataStream,
       subscriptionHandler
     });
-
-    console.log("method handler reply: ", methodHandlerReply);
 
     return methodHandlerReply;
   }
@@ -316,8 +313,8 @@ export class Dwn {
     if (dwnInterface === undefined || dwnMethod === undefined) {
       return {
         status: {
-          code: 400,
-          detail: `Both interface and method must be present, interface: ${dwnInterface}, method: ${dwnMethod}`
+          code   : 400,
+          detail : `Both interface and method must be present, interface: ${dwnInterface}, method: ${dwnMethod}`
         }
       };
     }

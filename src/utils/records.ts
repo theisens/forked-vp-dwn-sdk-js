@@ -1,8 +1,25 @@
 import type { DerivedPrivateJwk } from './hd-key.js';
 import type { Readable } from 'readable-stream';
-import type { Filter, KeyValues, StartsWithFilter } from '../types/query-types.js';
-import type { GenericMessage, GenericSignaturePayload } from '../types/message-types.js';
-import type { RecordsDeleteMessage, RecordsFilter, RecordsQueryMessage, RecordsReadMessage, RecordsSubscribeMessage, RecordsWriteDescriptor, RecordsWriteMessage, RecordsWriteTags, RecordsWriteTagsFilter } from '../types/records-types.js';
+import type {
+  Filter,
+  KeyValues,
+  StartsWithFilter
+} from '../types/query-types.js';
+import type {
+  GenericMessage,
+  GenericSignaturePayload
+} from '../types/message-types.js';
+import type {
+  RecordsDeleteMessage,
+  RecordsFilter,
+  RecordsQueryMessage,
+  RecordsReadMessage,
+  RecordsSubscribeMessage,
+  RecordsWriteDescriptor,
+  RecordsWriteMessage,
+  RecordsWriteTags,
+  RecordsWriteTagsFilter
+} from '../types/records-types.js';
 
 import { DateSort } from '../types/records-types.js';
 import { Encoder } from './encoder.js';
@@ -14,7 +31,10 @@ import { PermissionGrant } from '../protocols/permission-grant.js';
 import { removeUndefinedProperties } from './object.js';
 import { Secp256k1 } from './secp256k1.js';
 import { DwnError, DwnErrorCode } from '../core/dwn-error.js';
-import { DwnInterfaceName, DwnMethodName } from '../enums/dwn-interface-method.js';
+import {
+  DwnInterfaceName,
+  DwnMethodName
+} from '../enums/dwn-interface-method.js';
 import { HdKey, KeyDerivationScheme } from './hd-key.js';
 import { normalizeProtocolUrl, normalizeSchemaUrl } from './url.js';
 
@@ -22,11 +42,12 @@ import { normalizeProtocolUrl, normalizeSchemaUrl } from './url.js';
  * Class containing useful utilities related to the Records interface.
  */
 export class Records {
-
   /**
    * Checks if the given message is a `RecordsWriteMessage`.
    */
-  public static isRecordsWrite(message: GenericMessage): message is RecordsWriteMessage {
+  public static isRecordsWrite(
+    message: GenericMessage
+  ): message is RecordsWriteMessage {
     const isRecordsWrite =
       message.descriptor.interface === DwnInterfaceName.Records &&
       message.descriptor.method === DwnMethodName.Write;
@@ -37,7 +58,9 @@ export class Records {
   /**
    * Gets the DID of the author of the given message.
    */
-  public static getAuthor(message: RecordsWriteMessage | RecordsDeleteMessage): string | undefined {
+  public static getAuthor(
+    message: RecordsWriteMessage | RecordsDeleteMessage
+  ): string | undefined {
     let author;
 
     if (message.authorization.authorDelegatedGrant !== undefined) {
@@ -61,9 +84,10 @@ export class Records {
     const { encryption } = recordsWrite;
 
     // look for an encrypted symmetric key that is encrypted by the public key corresponding to the given private key
-    const matchingEncryptedKey = encryption!.keyEncryption.find(key =>
-      key.rootKeyId === ancestorPrivateKey.rootKeyId &&
-      key.derivationScheme === ancestorPrivateKey.derivationScheme
+    const matchingEncryptedKey = encryption!.keyEncryption.find(
+      (key) =>
+        key.rootKeyId === ancestorPrivateKey.rootKeyId &&
+        key.derivationScheme === ancestorPrivateKey.derivationScheme
     );
     if (matchingEncryptedKey === undefined) {
       throw new DwnError(
@@ -73,15 +97,29 @@ export class Records {
       );
     }
 
-    const fullDerivationPath = Records.constructKeyDerivationPath(matchingEncryptedKey.derivationScheme, recordsWrite);
+    const fullDerivationPath = Records.constructKeyDerivationPath(
+      matchingEncryptedKey.derivationScheme,
+      recordsWrite
+    );
 
     // NOTE: right now only `ECIES-ES256K` algorithm is supported for asymmetric encryption,
     // so we will assume that's the algorithm without additional switch/if statements
-    const leafPrivateKey = await Records.derivePrivateKey(ancestorPrivateKey, fullDerivationPath);
-    const encryptedKeyBytes = Encoder.base64UrlToBytes(matchingEncryptedKey.encryptedKey);
-    const ephemeralPublicKey = Secp256k1.publicJwkToBytes(matchingEncryptedKey.ephemeralPublicKey);
-    const keyEncryptionInitializationVector = Encoder.base64UrlToBytes(matchingEncryptedKey.initializationVector);
-    const messageAuthenticationCode = Encoder.base64UrlToBytes(matchingEncryptedKey.messageAuthenticationCode);
+    const leafPrivateKey = await Records.derivePrivateKey(
+      ancestorPrivateKey,
+      fullDerivationPath
+    );
+    const encryptedKeyBytes = Encoder.base64UrlToBytes(
+      matchingEncryptedKey.encryptedKey
+    );
+    const ephemeralPublicKey = Secp256k1.publicJwkToBytes(
+      matchingEncryptedKey.ephemeralPublicKey
+    );
+    const keyEncryptionInitializationVector = Encoder.base64UrlToBytes(
+      matchingEncryptedKey.initializationVector
+    );
+    const messageAuthenticationCode = Encoder.base64UrlToBytes(
+      matchingEncryptedKey.messageAuthenticationCode
+    );
     const dataEncryptionKey = await Encryption.eciesSecp256k1Decrypt({
       ciphertext           : encryptedKeyBytes,
       ephemeralPublicKey,
@@ -90,11 +128,16 @@ export class Records {
       privateKey           : leafPrivateKey
     });
 
-
     // NOTE: right now only `A256CTR` algorithm is supported for symmetric encryption,
     // so we will assume that's the algorithm without additional switch/if statements
-    const dataEncryptionInitializationVector = Encoder.base64UrlToBytes(encryption!.initializationVector);
-    const plaintextStream = await Encryption.aes256CtrDecrypt(dataEncryptionKey, dataEncryptionInitializationVector, cipherStream);
+    const dataEncryptionInitializationVector = Encoder.base64UrlToBytes(
+      encryption!.initializationVector
+    );
+    const plaintextStream = await Encryption.aes256CtrDecrypt(
+      dataEncryptionKey,
+      dataEncryptionInitializationVector,
+      cipherStream
+    );
 
     return plaintextStream;
   }
@@ -106,20 +149,27 @@ export class Records {
     keyDerivationScheme: KeyDerivationScheme,
     recordsWriteMessage: RecordsWriteMessage
   ): string[] {
-
     const descriptor = recordsWriteMessage.descriptor;
     const contextId = recordsWriteMessage.contextId;
 
     let fullDerivationPath;
     if (keyDerivationScheme === KeyDerivationScheme.DataFormats) {
-      fullDerivationPath = Records.constructKeyDerivationPathUsingDataFormatsScheme(descriptor.schema, descriptor.dataFormat);
+      fullDerivationPath =
+        Records.constructKeyDerivationPathUsingDataFormatsScheme(
+          descriptor.schema,
+          descriptor.dataFormat
+        );
     } else if (keyDerivationScheme === KeyDerivationScheme.ProtocolPath) {
-      fullDerivationPath = Records.constructKeyDerivationPathUsingProtocolPathScheme(descriptor);
+      fullDerivationPath =
+        Records.constructKeyDerivationPathUsingProtocolPathScheme(descriptor);
     } else if (keyDerivationScheme === KeyDerivationScheme.ProtocolContext) {
-      fullDerivationPath = Records.constructKeyDerivationPathUsingProtocolContextScheme(contextId);
+      fullDerivationPath =
+        Records.constructKeyDerivationPathUsingProtocolContextScheme(contextId);
     } else {
       // `schemas` scheme
-      fullDerivationPath = Records.constructKeyDerivationPathUsingSchemasScheme(descriptor.schema);
+      fullDerivationPath = Records.constructKeyDerivationPathUsingSchemasScheme(
+        descriptor.schema
+      );
     }
 
     return fullDerivationPath;
@@ -128,7 +178,10 @@ export class Records {
   /**
    * Constructs the full key derivation path using `dataFormats` scheme.
    */
-  public static constructKeyDerivationPathUsingDataFormatsScheme(schema: string | undefined, dataFormat: string ): string[] {
+  public static constructKeyDerivationPathUsingDataFormatsScheme(
+    schema: string | undefined,
+    dataFormat: string
+  ): string[] {
     if (schema !== undefined) {
       return [
         KeyDerivationScheme.DataFormats,
@@ -136,17 +189,16 @@ export class Records {
         dataFormat
       ];
     } else {
-      return [
-        KeyDerivationScheme.DataFormats,
-        dataFormat
-      ];
+      return [KeyDerivationScheme.DataFormats, dataFormat];
     }
   }
 
   /**
    * Constructs the full key derivation path using `protocolPath` scheme.
    */
-  public static constructKeyDerivationPathUsingProtocolPathScheme(descriptor: RecordsWriteDescriptor): string[] {
+  public static constructKeyDerivationPathUsingProtocolPathScheme(
+    descriptor: RecordsWriteDescriptor
+  ): string[] {
     // ensure `protocol` is defined
     // NOTE: no need to check `protocolPath` and `contextId` because earlier code ensures that if `protocol` is defined, those are defined also
     if (descriptor.protocol === undefined) {
@@ -169,7 +221,9 @@ export class Records {
   /**
    * Constructs the full key derivation path using `protocolContext` scheme.
    */
-  public static constructKeyDerivationPathUsingProtocolContextScheme(contextId: string | undefined): string[] {
+  public static constructKeyDerivationPathUsingProtocolContextScheme(
+    contextId: string | undefined
+  ): string[] {
     if (contextId === undefined) {
       throw new DwnError(
         DwnErrorCode.RecordsProtocolContextDerivationSchemeMissingContextId,
@@ -191,7 +245,9 @@ export class Records {
   /**
    * Constructs the full key derivation path using `schemas` scheme.
    */
-  public static constructKeyDerivationPathUsingSchemasScheme( schema: string | undefined ): string[] {
+  public static constructKeyDerivationPathUsingSchemasScheme(
+    schema: string | undefined
+  ): string[] {
     if (schema === undefined) {
       throw new DwnError(
         DwnErrorCode.RecordsSchemasDerivationSchemeMissingSchema,
@@ -199,10 +255,7 @@ export class Records {
       );
     }
 
-    const fullDerivationPath = [
-      KeyDerivationScheme.Schemas,
-      schema
-    ];
+    const fullDerivationPath = [KeyDerivationScheme.Schemas, schema];
 
     return fullDerivationPath;
   }
@@ -212,7 +265,10 @@ export class Records {
    * NOTE: right now only `ECIES-ES256K` algorithm is supported for asymmetric encryption,
    *       so we will only derive SECP256K1 key without additional conditional checks
    */
-  public static async derivePrivateKey(ancestorPrivateKey: DerivedPrivateJwk, fullDescendantDerivationPath: string[]): Promise<Uint8Array> {
+  public static async derivePrivateKey(
+    ancestorPrivateKey: DerivedPrivateJwk,
+    fullDescendantDerivationPath: string[]
+  ): Promise<Uint8Array> {
     if (ancestorPrivateKey.derivedPrivateKey.crv !== 'secp256k1') {
       throw new DwnError(
         DwnErrorCode.RecordsDerivePrivateKeyUnSupportedCurve,
@@ -220,13 +276,24 @@ export class Records {
       );
     }
 
-    const ancestorPrivateKeyDerivationPath = ancestorPrivateKey.derivationPath ?? [];
+    const ancestorPrivateKeyDerivationPath =
+      ancestorPrivateKey.derivationPath ?? [];
 
-    Records.validateAncestorKeyAndDescentKeyDerivationPathsMatch(ancestorPrivateKeyDerivationPath, fullDescendantDerivationPath);
+    Records.validateAncestorKeyAndDescentKeyDerivationPathsMatch(
+      ancestorPrivateKeyDerivationPath,
+      fullDescendantDerivationPath
+    );
 
-    const subDerivationPath = fullDescendantDerivationPath.slice(ancestorPrivateKeyDerivationPath.length);
-    const ancestorPrivateKeyBytes = Secp256k1.privateJwkToBytes(ancestorPrivateKey.derivedPrivateKey);
-    const leafPrivateKey = await HdKey.derivePrivateKeyBytes(ancestorPrivateKeyBytes, subDerivationPath);
+    const subDerivationPath = fullDescendantDerivationPath.slice(
+      ancestorPrivateKeyDerivationPath.length
+    );
+    const ancestorPrivateKeyBytes = Secp256k1.privateJwkToBytes(
+      ancestorPrivateKey.derivedPrivateKey
+    );
+    const leafPrivateKey = await HdKey.derivePrivateKeyBytes(
+      ancestorPrivateKeyBytes,
+      subDerivationPath
+    );
 
     return leafPrivateKey;
   }
@@ -245,7 +312,8 @@ export class Records {
       if (ancestorSegment !== descendantSegment) {
         throw new DwnError(
           DwnErrorCode.RecordsInvalidAncestorKeyDerivationSegment,
-          `Ancestor key derivation segment '${ancestorSegment}' mismatches against the descendant key derivation segment '${descendantSegment}'.`);
+          `Ancestor key derivation segment '${ancestorSegment}' mismatches against the descendant key derivation segment '${descendantSegment}'.`
+        );
       }
     }
   }
@@ -253,7 +321,9 @@ export class Records {
   /**
    * Extracts the parent context ID from the given context ID.
    */
-  public static getParentContextFromOfContextId(contextId: string | undefined): string | undefined {
+  public static getParentContextFromOfContextId(
+    contextId: string | undefined
+  ): string | undefined {
     if (contextId === undefined) {
       return undefined;
     }
@@ -295,23 +365,28 @@ export class Records {
     const filterCopy = {
       ...filter,
       protocol,
-      schema,
+      schema
     };
 
     removeUndefinedProperties(filterCopy);
     return filterCopy;
   }
 
-
-  public static isStartsWithFilter(filter: RecordsWriteTagsFilter): filter is StartsWithFilter {
-    return typeof filter === 'object' && ('startsWith' in filter && typeof filter.startsWith === 'string');
+  public static isStartsWithFilter(
+    filter: RecordsWriteTagsFilter
+  ): filter is StartsWithFilter {
+    return (
+      typeof filter === 'object' &&
+      'startsWith' in filter &&
+      typeof filter.startsWith === 'string'
+    );
   }
 
   /**
    * This will create individual keys for each of the tags that look like `tag.tag_property`
    */
   public static buildTagIndexes(tags: RecordsWriteTags): KeyValues {
-    const tagValues:KeyValues = {};
+    const tagValues: KeyValues = {};
     for (const property in tags) {
       const value = tags[property];
       tagValues[`tag.${property}`] = value;
@@ -322,11 +397,15 @@ export class Records {
   /**
    * This will create individual keys for each of the tag filters that look like `tag.tag_filter_property`
    */
-  public static convertTagsFilter( tags: { [property: string]: RecordsWriteTagsFilter}): Filter {
-    const tagValues:Filter = {};
+  public static convertTagsFilter(tags: {
+    [property: string]: RecordsWriteTagsFilter;
+  }): Filter {
+    const tagValues: Filter = {};
     for (const property in tags) {
       const value = tags[property];
-      tagValues[`tag.${property}`] = this.isStartsWithFilter(value) ? FilterUtility.constructPrefixFilterAsRangeFilter(value.startsWith) : value;
+      tagValues[`tag.${property}`] = this.isStartsWithFilter(value)
+        ? FilterUtility.constructPrefixFilterAsRangeFilter(value.startsWith)
+        : value;
     }
     return tagValues;
   }
@@ -337,7 +416,10 @@ export class Records {
    * @param filter A RecordsFilter
    * @returns {Filter} a generic Filter able to be used with MessageStore.
    */
-  public static convertFilter(filter: RecordsFilter, dateSort?: DateSort): Filter {
+  public static convertFilter(
+    filter: RecordsFilter,
+    dateSort?: DateSort
+  ): Filter {
     // we process tags separately from the remaining filters.
     // this is because we prepend each field within the `tags` object with a `tag.` to avoid name clashing with first-class index keys.
     // so `{ tags: { tag1: 'val1', tag2: [1,2] }}` would translate to `'tag.tag1':'val1'` and `'tag.tag2': [1,2]`
@@ -353,12 +435,16 @@ export class Records {
     // extract properties that needs conversion
     const { dateCreated, datePublished, dateUpdated, contextId } = filter;
 
-    const dateCreatedFilter = dateCreated ? FilterUtility.convertRangeCriterion(dateCreated) : undefined;
+    const dateCreatedFilter = dateCreated
+      ? FilterUtility.convertRangeCriterion(dateCreated)
+      : undefined;
     if (dateCreatedFilter) {
       filterCopy.dateCreated = dateCreatedFilter;
     }
 
-    const datePublishedFilter = datePublished ? FilterUtility.convertRangeCriterion(datePublished): undefined;
+    const datePublishedFilter = datePublished
+      ? FilterUtility.convertRangeCriterion(datePublished)
+      : undefined;
     if (datePublishedFilter) {
       // only return published records when filtering with a datePublished range.
       filterCopy.published = true;
@@ -366,18 +452,26 @@ export class Records {
     }
 
     // if we sort by `PublishedAscending` or `PublishedDescending` we must filter for only published records.
-    if (filterCopy.published !== true && (dateSort === DateSort.PublishedAscending || dateSort === DateSort.PublishedDescending)) {
+    if (
+      filterCopy.published !== true &&
+      (dateSort === DateSort.PublishedAscending ||
+        dateSort === DateSort.PublishedDescending)
+    ) {
       filterCopy.published = true;
     }
 
-    const messageTimestampFilter = dateUpdated ? FilterUtility.convertRangeCriterion(dateUpdated) : undefined;
+    const messageTimestampFilter = dateUpdated
+      ? FilterUtility.convertRangeCriterion(dateUpdated)
+      : undefined;
     if (messageTimestampFilter) {
       filterCopy.messageTimestamp = messageTimestampFilter;
       delete filterCopy.dateUpdated;
     }
 
     // contextId conversion to prefix match
-    const contextIdPrefixFilter = contextId ? FilterUtility.constructPrefixFilterAsRangeFilter(contextId) : undefined;
+    const contextIdPrefixFilter = contextId
+      ? FilterUtility.constructPrefixFilterAsRangeFilter(contextId)
+      : undefined;
     if (contextIdPrefixFilter) {
       filterCopy.contextId = contextIdPrefixFilter;
     }
@@ -393,13 +487,20 @@ export class Records {
    *                              Passed purely as a performance optimization so we don't have to decode the owner signature payload again.
    */
   public static async validateDelegatedGrantReferentialIntegrity(
-    message: RecordsReadMessage | RecordsQueryMessage | RecordsWriteMessage | RecordsDeleteMessage | RecordsSubscribeMessage,
+    message:
+      | RecordsReadMessage
+      | RecordsQueryMessage
+      | RecordsWriteMessage
+      | RecordsDeleteMessage
+      | RecordsSubscribeMessage,
     authorSignaturePayload: GenericSignaturePayload | undefined,
     ownerSignaturePayload?: GenericSignaturePayload | undefined
   ): Promise<void> {
     // `deletedGrantId` in the payload of the message signature and `authorDelegatedGrant` in `authorization` must both exist or be both undefined
-    const authorDelegatedGrantIdDefined = authorSignaturePayload?.delegatedGrantId !== undefined;
-    const authorDelegatedGrantDefined = message.authorization?.authorDelegatedGrant !== undefined;
+    const authorDelegatedGrantIdDefined =
+      authorSignaturePayload?.delegatedGrantId !== undefined;
+    const authorDelegatedGrantDefined =
+      message.authorization?.authorDelegatedGrant !== undefined;
     if (authorDelegatedGrantIdDefined !== authorDelegatedGrantDefined) {
       throw new DwnError(
         DwnErrorCode.RecordsAuthorDelegatedGrantAndIdExistenceMismatch,
@@ -434,7 +535,9 @@ export class Records {
         throw new DwnError(
           DwnErrorCode.RecordsAuthorDelegatedGrantCidMismatch,
           `CID of the author delegated grant ${delegateGrantCid} must be the same as \
-          the delegatedGrantId ${authorSignaturePayload!.delegatedGrantId} in the message signature.`
+          the delegatedGrantId ${
+            authorSignaturePayload!.delegatedGrantId
+} in the message signature.`
         );
       }
     }
@@ -442,8 +545,10 @@ export class Records {
     // repeat the same checks for the owner signature below
 
     // `deletedGrantId` in the payload of the owner signature and `ownerDelegatedGrant` in `authorization` must both exist or be both undefined
-    const ownerDelegatedGrantIdDefined = ownerSignaturePayload?.delegatedGrantId !== undefined;
-    const ownerDelegatedGrantDefined = message.authorization?.ownerDelegatedGrant !== undefined;
+    const ownerDelegatedGrantIdDefined =
+      ownerSignaturePayload?.delegatedGrantId !== undefined;
+    const ownerDelegatedGrantDefined =
+      message.authorization?.ownerDelegatedGrant !== undefined;
     if (ownerDelegatedGrantIdDefined !== ownerDelegatedGrantDefined) {
       throw new DwnError(
         DwnErrorCode.RecordsOwnerDelegatedGrantAndIdExistenceMismatch,
@@ -465,7 +570,9 @@ export class Records {
       }
 
       const grantedTo = delegatedGrant.descriptor.recipient;
-      const signer = Jws.getSignerDid(message.authorization!.ownerSignature!.signatures[0]);
+      const signer = Jws.getSignerDid(
+        message.authorization!.ownerSignature!.signatures[0]
+      );
       if (grantedTo !== signer) {
         throw new DwnError(
           DwnErrorCode.RecordsOwnerDelegatedGrantGrantedToAndOwnerSignatureMismatch,
@@ -478,7 +585,9 @@ export class Records {
         throw new DwnError(
           DwnErrorCode.RecordsOwnerDelegatedGrantCidMismatch,
           `CID of the owner delegated grant ${delegateGrantCid} must be the same as \
-          the delegatedGrantId ${ownerSignaturePayload!.delegatedGrantId} in the owner signature.`
+          the delegatedGrantId ${
+            ownerSignaturePayload!.delegatedGrantId
+} in the owner signature.`
         );
       }
     }
@@ -487,7 +596,9 @@ export class Records {
   /**
    * Determines if signature payload contains a protocolRole and should be authorized as such.
    */
-  static shouldProtocolAuthorize(signaturePayload: GenericSignaturePayload): boolean {
+  static shouldProtocolAuthorize(
+    signaturePayload: GenericSignaturePayload
+  ): boolean {
     return signaturePayload.protocolRole !== undefined;
   }
 

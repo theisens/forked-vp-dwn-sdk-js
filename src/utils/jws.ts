@@ -1,14 +1,14 @@
-import type { GeneralJws } from "../types/jws-types.js";
-import type { SignatureEntry } from "../types/jws-types.js";
-import type { Signer } from "../types/signer.js";
-import type { KeyMaterial, PublicJwk } from "../types/jose-types.js";
+import type { GeneralJws } from '../types/jws-types.js';
+import type { SignatureEntry } from '../types/jws-types.js';
+import type { Signer } from '../types/signer.js';
+import type { KeyMaterial, PublicJwk } from '../types/jose-types.js';
 
-import isPlainObject from "lodash/isPlainObject.js";
+import isPlainObject from 'lodash/isPlainObject.js';
 
-import { Encoder } from "./encoder.js";
-import { PrivateKeySigner } from "./private-key-signer.js";
-import { signatureAlgorithms } from "../jose/algorithms/signing/signature-algorithms.js";
-import { DwnError, DwnErrorCode } from "../core/dwn-error.js";
+import { Encoder } from './encoder.js';
+import { PrivateKeySigner } from './private-key-signer.js';
+import { signatureAlgorithms } from '../jose/algorithms/signing/signature-algorithms.js';
+import { DwnError, DwnErrorCode } from '../core/dwn-error.js';
 
 /**
  * Utility class for JWS related operations.
@@ -69,14 +69,14 @@ export class Jws {
     } catch {
       throw new DwnError(
         DwnErrorCode.JwsDecodePlainObjectPayloadInvalid,
-        "payload is not a JSON object"
+        'payload is not a JSON object'
       );
     }
 
     if (!isPlainObject(payloadJson)) {
       throw new DwnError(
         DwnErrorCode.JwsDecodePlainObjectPayloadInvalid,
-        "signed payload must be a plain object"
+        'signed payload must be a plain object'
       );
     }
 
@@ -87,7 +87,7 @@ export class Jws {
    * Extracts the DID from the given `kid` string.
    */
   public static extractDid(kid: string): string {
-    const [did] = kid.split("#");
+    const [did] = kid.split('#');
     return did;
   }
 
